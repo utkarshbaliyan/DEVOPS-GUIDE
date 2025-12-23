@@ -1,0 +1,22 @@
+topics
+- Configuration Management.
+- why ansible 
+- ansible vs chef and puppet 
+- ansible vs terraform 
+- multi environment / cloud management 
+- pull vs push based machenism 
+- what and how chef and puppet works 
+- how to manage 3 ububtu server created on aws through only one master server.
+    - first ssh into master srever using the key pair created 
+    - then install ansible on the master server 
+    - 
+- what and where is host file 
+- how can we create groups inside the host vim file eg. dev group containig all the dev instances 
+- ansible_host= (command)
+- scp (command)
+- adhoc command and module 
+- ansible playbook 
+  - crate a playbook to show server uptime 
+  - install anginix using playbook 
+  - deploy a html page
+- inventory
