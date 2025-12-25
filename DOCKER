@@ -1,1 +1,10 @@
+- what is docker?
+- virtualization vs containarizarion 
+- docker architecture
+  -deamon
+    -container D
+  -engine
+  -cli
+  -docker client
+- docker installation 
 
