@@ -72,3 +72,149 @@ By default, data inside a container is ephemeral (it disappears if the container
 -Volumes: Managed by Docker (stored in /var/lib/docker/volumes). This is the best way to persist data (e.g., database files).
 -Bind Mounts: Maps a specific folder on your Mac/PC to a folder inside the container. Great for "hot-reloading" code during development.
 -tmpfs Mount: Stores data in the host system's memory only (never written to disk).
+
+10. Docker compose 
+
+Docker Compose is a tool that allows you to define and run multi-container Docker applications. 
+Instead of running ten different docker run commands with complex network and volume flags, 
+you define everything in a single YAML file (docker-compose.yml) and launch the whole stack with one command.
+
+1. Why Use Docker Compose?
+Infrastructure as Code (IaC): Your environment setup is documented in a file, not hidden in your terminal history.
+One-Command Orchestration: Use docker-compose up to start everything and docker-compose down to stop and clean up.
+Isolated Environments: It creates a dedicated network for your project by default, preventing conflicts with other projects.
+Scalability: You can easily scale a service (like a web worker) by running docker-compose up --scale web=3.
+
+2. The docker-compose.yml Structure
+The file is divided into four main sections:
+-Version: The version of the Compose file format (e.g., 3.8).
+-Services: The containers you want to run (e.g., web, db).
+-Networks: Custom networks for the containers.
+-Volumes: Persistent storage shared between or used by containers.
+
+3. Hands-on Example: Your Two-Tier App
+Let’s take the Flask + MariaDB project you just did manually and turn it into a Compose file.
+Create a file named docker-compose.yml in your project root:
+----------------------------------------------------------------------------------------------
+YAML
+version: '3.8'
+
+services:
+  # Tier 1: The Database
+  mysql:
+    image: mariadb:latest
+    container_name: mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: devops
+    networks:
+      - twotier
+    # This keeps data even if the container is deleted
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # Tier 2: The Flask App
+  flask-app:
+    build: .
+    container_name: flask-app
+    ports:
+      - "5001:5000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DB: devops
+    networks:
+      - twotier
+    depends_on:
+      - mysql
+
+networks:
+  twotier:
+    driver: bridge
+
+volumes:
+  db_data:
+----------------------------------------------------------------------------------------------
+4. Essential Docker Compose Commands
+Command	Description
+docker-compose up	Builds, creates, and starts containers.
+docker-compose up -d	Starts containers in the background (detached).
+docker-compose ps	Lists the status of containers managed by the YAML file.
+docker-compose logs -f	Views live logs from all containers in the stack.
+docker-compose stop	Stops the containers but keeps them.
+docker-compose down	Stops and removes containers and networks.
+docker-compose build	Rebuilds the images (useful if you changed your code).
+
+11. Docker Registry
+
+A Docker Registry is the central "library" or "warehouse" where Docker images are stored, versioned, and distributed. 
+It acts as the server-side application that holds your images so they can be "pulled" (downloaded) 
+or "pushed" (uploaded) across different environments.
+If a Docker Image is the "blueprint" and a Docker Repository is a "collection of different versions (tags) of that blueprint," 
+then a Docker Registry is the "hosting service" that manages multiple repositories.
+
+1. How a Registry Works
+The workflow of a registry is simple but critical for CI/CD:
+Push: A developer builds an image locally and "pushes" it to the registry.
+Store: The registry stores the image layers and metadata (manifest).
+Pull: A production server or a colleague "pulls" that exact image from the registry to run it.
+
+2. Types of Docker Registries
+A. Public Registries (The "GitHub" for Images)
+-Docker Hub: The default and largest public registry. It hosts "Official Images" (like python, nginx, mysql) that are verified by Docker.
+-GitHub Container Registry (GHCR): Integrated into GitHub. Often used because it allows you to keep your code and images in the same place.
+
+B. Private/Cloud-Managed Registries
+
+These are secure, private registries used by companies to store proprietary code.
+-Amazon ECR (Elastic Container Registry): Deeply integrated with AWS IAM and ECS/EKS.
+-Azure Container Registry (ACR): The equivalent for the Microsoft Azure ecosystem.
+-Google Artifact Registry (formerly GCR): For Google Cloud (GCP) users.
+
+C. Self-Hosted (On-Premise)
+
+You can run your own registry inside your own data center for maximum security and speed.
+Docker Registry (Distribution): Docker provides an official image called registry:2 that allows you to run a basic registry as a container.
+Harbor: An open-source, enterprise-grade registry with security scanning and role-based access control (RBAC).
+
+3. Essential Registry Commands
+To use any registry, you must follow these three steps: Login, Tag, and Push.
+
+Step 1: Authentication
+
+Before pushing to a private registry (or your own Docker Hub account), you must log in.
+--------------------------------
+Bash
+docker login
+# Or for a specific registry:
+docker login myregistry.com
+Step 2: Tagging for the Registry
+--------------------------------
+
+Docker needs to know where to send the image. You do this by prefixing the image name with the registry address or your username.
+----------------------------------------------------------------
+Bash
+# Syntax: docker tag [local-image] [username/repo:tag]
+docker tag my-app:latest utkarshbaliyan/my-app:v1.0
+----------------------------------------------------------------
+
+
+Step 3: Pushing the Image
+--------------------------------
+Bash
+docker push utkarshbaliyan/my-app:v1.0
+--------------------------------
+4. Key Differences: Registry vs. Repository
+This is a common interview question for DevOps roles:
+
+Term	         Analogy	                          Technical Definition
+Registry	     The Library Building              	A service that hosts and distributes images (e.g., Docker Hub).
+Repository	   A Specific Book Series	            A collection of related images with the same name but different tags (e.g., nginx).
+Tag            The Edition/Volume	                A specific version of an image (e.g., 1.21-alpine).
+
+12. Multi-stage Docker Build
+
+A Multi-stage Docker Build is a method used to create smaller, more secure, and more efficient Docker images by using multiple FROM statements in a single Dockerfile.
+As a DevOps engineer, this is one of the most important optimization techniques you will learn. It allows you to separate the build environment
+(where you compile code and install heavy tools) from the runtime environment (where your app actually runs).
