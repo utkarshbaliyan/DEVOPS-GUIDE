@@ -1,1 +1,63 @@
+1. What is kubernetes?
 
+Kubernetes (often abbreviated as K8s) is an open-source container orchestration platform designed to automate the deployment, scaling, and management of containerized applications.
+Originally developed by Google and now maintained by the Cloud Native Computing Foundation (CNCF), it acts as the "operating system" for your cloud infrastructure, ensuring that your applications run exactly where and how they should across a cluster of servers.
+
+a. Solving the "Docker Single Host" Problem
+While Docker revolutionized how we package applications, it primarily focuses on the individual container. If you run Docker on a single machine (host), you face significant risks:
+Resource Exhaustion: If the host runs out of RAM or CPU, all containers crash.
+Single Point of Failure: If that one server goes down, your entire application goes offline.
+Manual Management: You have to manually track which container is running on which port and manage networking between them.
+Kubernetes solves this by grouping a collection of hosts (virtual or physical) into a cluster. It treats the entire cluster as a single pool of resources, automatically deciding which server has enough room to run a new container.
+
+b. Auto-Scaling (Handling Traffic Spikes)
+In a traditional setup, handling a sudden burst of traffic requires manual intervention or complex scripts to spin up new servers.
+Horizontal Pod Autoscaler (HPA): Kubernetes monitors your containers. If CPU usage spikes (e.g., during a flash sale), K8s automatically spins up more copies (replicas) of your container to distribute the load.
+Cluster Autoscaler: If your physical servers are full, K8s can work with cloud providers (like AWS or Azure) to automatically add more virtual machines to the cluster.
+
+c. Auto-Healing (High Availability)
+Kubernetes is "self-healing." It constantly monitors the state of your applications against your desired configuration.
+Container Failures: If a container crashes, K8s detects it and restarts it immediately.
+Node Failures: If an entire server (node) dies, K8s identifies which containers were lost and recreates them on the remaining healthy servers.
+Health Checks: It uses "Liveness" and "Readiness" probes to ensure traffic is only sent to containers that are actually functioning correctly.
+
+d. Enterprise-Level Standards
+For large-scale organizations, Kubernetes provides the framework necessary to manage thousands of containers securely and efficiently:
+Service Discovery & Load Balancing: K8s gives containers their own IP addresses and a single DNS name for a set of containers, automatically balancing traffic between them.
+Zero-Downtime Deployments: It supports "Rolling Updates," where it replaces old versions of your app with new ones one-by-one. If something goes wrong, it can automatically roll back to the previous version.
+Declarative Configuration: Everything is managed via code (YAML files), allowing teams to use Version Control (Git) to manage their infrastructure, ensuring consistency across development, staging, and production environments.
+
+2. Kubernetes architecture.
+
+Kubernetes follows a Master-Worker architecture (often called the Control Plane and Node model). Think of it like a restaurant: the Control Plane is the manager and head chef making decisions, while the Worker Nodes are the kitchen staff actually preparing the food (your application).
+
+a. The Control Plane (The "Brain")
+
+The Control Plane makes global decisions about the cluster, such as scheduling and responding to events (e.g., starting a new pod when a replica count isn't met).
+-kube-apiserver: The "Front Door." It is the only component that communicates with everything else. When you run a command like kubectl get pods, you are talking to this server. It validates and processes all requests.
+-etcd: The "Memory." It is a highly-available key-value store that acts as the cluster's database. It stores the entire state of the cluster (what's running, where, and how).
+-Connection: Only the API Server talks directly to etcd.
+-kube-scheduler: The "Decision Maker." When you want to run a new container, the scheduler looks at your cluster's health and decides which Worker Node has enough CPU and RAM to handle it.
+-kube-controller-manager: The "Enforcer." It runs background "watch loops." If you say "I want 3 copies of my app," and one crashes, the controller sees the "actual state" (2) doesn't match the "desired state" (3) and tells the API server to fix it.
+-cloud-controller-manager: The "Bridge." This allows K8s to talk to cloud providers (AWS, Azure, GCP). It handles things like creating a Load Balancer or adding storage volumes automatically.
+
+b. The Worker Node (The "Muscle")
+
+Worker nodes are the machines (VMs or physical servers) where your actual application containers run.
+
+-Kubelet: The "Agent." It runs on every node in the cluster. It ensures that the containers described in the "PodSpec" (the instructions from the Master) are actually running and healthy. If the API server says "Run this pod," the Kubelet makes it happen.
+-Kube-proxy: The "Networking Guy." It manages network rules on the node. It handles the "Service" networking, ensuring that if you send traffic to a specific IP, it gets routed to the correct container, regardless of which node it’s on.
+-Container Runtime: The "Engine." This is the software responsible for running the containers. While Docker was the original, K8s now uses containerd or CRI-O as standard.
+-Pod: The "Unit." This is the smallest object in Kubernetes. A Pod usually wraps a single container (like your Nginx or Python app), but it can hold multiple containers that need to share the same network and storage.
+
+3. How they are connected (The Workflow)
+
+Here is exactly how a request flows through the system:
+
+User Action: You run kubectl apply -f deployment.yaml.
+API Server: Receives your request, validates it, and writes the "Desired State" into etcd.
+Controller Manager: Notices the new entry in etcd. It sees that you want 3 replicas but 0 exist. It creates 3 "Pod" objects in the API server.
+Scheduler: Notices the new Pods that have no node assigned. It picks the best Worker Node for each and updates the API server.
+Kubelet: The Kubelet on that specific Worker Node "watches" the API server. It sees a Pod has been assigned to its node.
+Container Runtime: The Kubelet tells the runtime to pull the image and start the container.
+Kube-proxy: Updates the local networking rules so that traffic can now reach this new container.
