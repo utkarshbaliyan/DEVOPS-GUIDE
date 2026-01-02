@@ -1,4 +1,4 @@
-1. What is kubernetes?
+1. What is kubernetes?---------------------------
 
 Kubernetes (often abbreviated as K8s) is an open-source container orchestration platform designed to automate the deployment, scaling, and management of containerized applications.
 Originally developed by Google and now maintained by the Cloud Native Computing Foundation (CNCF), it acts as the "operating system" for your cloud infrastructure, ensuring that your applications run exactly where and how they should across a cluster of servers.
@@ -27,7 +27,7 @@ Service Discovery & Load Balancing: K8s gives containers their own IP addresses 
 Zero-Downtime Deployments: It supports "Rolling Updates," where it replaces old versions of your app with new ones one-by-one. If something goes wrong, it can automatically roll back to the previous version.
 Declarative Configuration: Everything is managed via code (YAML files), allowing teams to use Version Control (Git) to manage their infrastructure, ensuring consistency across development, staging, and production environments.
 
-2. Kubernetes architecture.
+2. Kubernetes architecture.---------------------------
 
 Kubernetes follows a Master-Worker architecture (often called the Control Plane and Node model). Think of it like a restaurant: the Control Plane is the manager and head chef making decisions, while the Worker Nodes are the kitchen staff actually preparing the food (your application).
 
@@ -62,7 +62,7 @@ Kubelet: The Kubelet on that specific Worker Node "watches" the API server. It s
 Container Runtime: The Kubelet tells the runtime to pull the image and start the container.
 Kube-proxy: Updates the local networking rules so that traffic can now reach this new container.
 
-3. Namespaces 
+3. Namespaces ---------------------------
 
 In Kubernetes, Namespaces are virtual partitions within a single physical cluster.
 Think of a cluster as a large office building; Namespaces are the individual offices or departments within that building. 
@@ -85,7 +85,7 @@ Pods	              The Waiters	                   The actual people serving the 
 Service	            The Host Stand	               The fixed point at the entrance. Customers walk up to the Host Stand. The Host knows which Waiters are free and assigns the customer to one.
 User	              The Customer	                 The person entering the restaur
 
-4. Pods
+4. Pods---------------------------
 
 In Kubernetes, the Pod is the smallest, most basic deployable object. If Kubernetes were a Lego set, the Pod is the single brick.
 Crucially, Kubernetes does not run containers directly; it runs Pods, and the Pods run the containers.
@@ -130,7 +130,7 @@ They die: If a Pod crashes, is deleted, or the Node dies, it is gone forever.
 No Resurrection: Kubernetes does not fix a broken Pod. Instead, it creates a brand new one to replace it. The new Pod will have a new IP address.
 This is why you never use a Pod's IP address directly in your code; you use a Service.
 
-5. jobs and cron jobs 
+5. jobs and cron jobs ---------------------------
 
 In Kubernetes, while Deployments are designed for applications that run forever (like web servers), Jobs and CronJobs are designed for tasks that are meant to finish.
 Here is the breakdown of the difference:
@@ -194,14 +194,14 @@ spec:
           restartPolicy: OnFailure
 Summary Table
 
-6. Ingress
+6. Ingress---------------------------
 
 Ingress in Kubernetes is an object that manages external access to the services in your cluster, typically for HTTP and HTTPS traffic.
 Think of Ingress as the Smart Receptionist for your building (cluster).
 Without Ingress: Every time you want to expose a new app (Frontend, API, Admin Panel), you have to rent a new phone number (LoadBalancer IP) from the phone company (AWS/Azure). This is expensive and hard to manage.
 With Ingress: You rent one phone number (One Public IP). The receptionist (Ingress) answers all calls and routes them to the correct office based on who the caller is asking for.
 
-7. Confitsets and secrets
+7. Confitsets and secrets---------------------------
 
 In Kubernetes, ConfigMaps and Secrets are the two primary ways to inject configuration data into your applications without hardcoding it into your application code or Docker image.
 They allow you to follow the "Build Once, Deploy Anywhere" philosophy. You use the exact same Docker image for Dev, Staging, and Production, but you swap out the ConfigMap/Secret to change the behavior.
@@ -250,3 +250,122 @@ data:
   # This is "password123" encoded in Base64
   db_password: cGFzc3dvcmQxMjM=
 
+8. Resource quotas---------------------------
+
+A ResourceQuota provides constraints that limit the total resource consumption per Namespace.
+Think of a Kubernetes Cluster as a company credit card with a ₹1,00,000 limit. A ResourceQuota is like giving the Marketing Department a specific sub-limit of ₹20,000 so they don't accidentally spend the entire company budget on one lunch.
+Without ResourceQuotas, a single buggy application in the "Development" namespace could consume 100% of the CPU and RAM, causing your "Production" database to crash.
+
+1. What Can You Limit?
+
+You can set hard limits on three main categories of resources:
+
+A. Compute Resources (CPU & RAM)
+B. Storage Resources
+You can limit how much disk space a namespace claims.
+C. Object Counts
+You can limit the number of objects to prevent spamming the cluster database.
+
+9. Probes ---------------------------
+
+In Kubernetes, Probes are "health checks" that the cluster runs on your containers to see if they are working correctly.
+Think of Probes as a doctor constantly checking the pulse of your application.
+Without Probes: Kubernetes assumes that as long as the process is running (the PID exists), the app is healthy. But your app could be stuck in a deadlock, returning 500 errors, or still loading data—Kubernetes wouldn't know and would keep sending traffic to it.
+With Probes: Kubernetes asks your app, "Are you okay?" based on rules you define. If the answer is "No," Kubernetes takes action.
+
+The 3 Types of Probes
+
+Each probe answers a different question and triggers a different action.
+
+1. Liveness Probe ("Are you alive?")
+The Question: "Is the application running and healthy, or has it crashed/deadlocked?"
+The Action (If Failed): Restart the Container.
+Use Case: Your app has a bug where it enters an infinite loop or deadlock. The process is still "running," but it's frozen. The Liveness probe detects this, and Kubernetes kills it and starts a new one.
+
+2. Readiness Probe ("Are you ready for traffic?")
+The Question: "Are you ready to accept user requests right now?"
+The Action (If Failed): Stop sending traffic. (It temporarily removes the Pod's IP from the Service/LoadBalancer). It does not restart the pod.
+Use Case: Your app starts up but takes 30 seconds to load a large database cache into memory. During these 30 seconds, it shouldn't receive user traffic. The Readiness probe waits until the cache is loaded before letting users in.
+
+3. Startup Probe ("Have you started yet?")
+The Question: "Is the application finished booting up?"
+The Action (If Failed): Kill and Restart (similar to Liveness).
+Use Case: You have a massive legacy Java application that takes 5 minutes to start.
+If you used a Liveness probe, it would kill the app after 30 seconds because it hasn't responded yet.
+The Startup probe pauses the Liveness/Readiness probes until the app has successfully started once.
+
+10. Taints and toleration ---------------------
+
+Taints and Tolerations work together to ensure that Pods are not scheduled onto inappropriate nodes. They function as a restriction mechanism.
+Think of a Taint as a "Repellent Spray" applied to a Node. It repels all Pods unless they have specific "immunity" (Toleration).
+Taints are applied to Nodes. (They say: "Stay away!")
+Tolerations are applied to Pods. (They say: "I am allowed to be here.")
+This is the opposite of Node Affinity, which attracts pods to nodes. Taints repel them.
+
+1. How it Works (The "Blue Paint" Analogy)
+
+Imagine you have a server with expensive GPUs intended only for AI workloads. You don't want a simple "Hello World" app wasting space there.
+The Taint (The Paint): You paint the GPU Node "Blue". You set a rule: "Do not land here unless you tolerate Blue paint."
+The Normal Pod: A standard web app pod tries to land. It sees the "Blue" paint. It has no instruction to handle this, so the Scheduler rejects it. It goes to a different node.
+The Tolerant Pod: An AI job pod comes along. It has a Toleration in its YAML that says: "I tolerate Blue paint." The Scheduler sees this match and allows the pod to land on the GPU node.
+
+2. The Three "Effects"
+When you apply a taint, you must choose an "Effect." This dictates how strict the rule is.
+
+-NoSchedule (The Bouncer):
+Strict. If a Pod does not have the toleration, it will not be scheduled on this node.
+Existing pods that are already running on the node are safe and won't be kicked off.
+
+-PreferNoSchedule (The Soft Suggestion):
+"Try to avoid this node."
+If there are no other places to go, the Scheduler will put the pod here even without a toleration.
+
+-NoExecute (The Evictor):
+Aggressive.
+It affects new pods (blocks them).
+It also affects existing pods! If a running pod does not have the toleration, it is evicted (killed) immediately.
+
+3. Real-World Use Cases
+A. Dedicated Hardware (GPUs)
+You have nodes with expensive NVIDIA GPUs. You taint them: key=gpu, value=true, effect=NoSchedule Only Pods that actually need GPUs include the toleration. This prevents your generic frontend apps from clogging up your expensive hardware.
+B. Master Node Isolation
+By default, Kubernetes taints the Control Plane (Master) node with NoSchedule. This is why your application pods land on Worker nodes, not the Master node. It protects the cluster's brain from high resource usage.
+C. Node Problems (Auto-Tainting)
+If a node runs out of disk space or loses network connectivity, the Kubernetes Controller automatically adds a taint (e.g., node.kubernetes.io/disk-pressure). This stops new pods from being scheduled there until the issue is fixed.
+
+11. HPA, VPA and metric server -------------------------
+
+HPA (Horizontal Pod Autoscaler) and VPA (Vertical Pod Autoscaler) are the two main ways Kubernetes automatically adjusts your application to handle changing workloads.
+They rely entirely on a component called the Metrics Server to make decisions.
+
+1. The Metrics Server (The "Fuel Gauge")
+Before explaining the scalers, you must understand this component. Kubernetes does not store historical data of your CPU/RAM usage by default.
+What it is: A lightweight add-on that scrapes resource usage data (CPU & Memory) from every Node in the cluster.
+Why it's vital: HPA and VPA ask the Metrics Server: "How much CPU is Pod A using right now?"
+Without it: Neither HPA nor VPA will work. If you run kubectl top pods and get an error, it usually means the Metrics Server is not installed or broken.
+
+2. HPA: Horizontal Pod Autoscaler (Scaling OUT)
+"Hire more workers."
+HPA increases the number of replicas (Pods) to distribute the load.
+How it works: You set a target, e.g., "Keep average CPU usage at 50%."
+Scenario:
+
+You have 2 Pods running. Traffic spikes.
+Metrics Server reports: "Average CPU is now 90%!"
+HPA calculates: "To get back down to 50%, I need 4 Pods."
+HPA updates the Deployment to replicas: 4.
+Pros: fast, zero downtime (new pods just pop up), standard for stateless apps (Web Servers).
+Cons: Not useful if your app is single-threaded and can't be split across multiple instances.
+
+3. VPA: Vertical Pod Autoscaler (Scaling UP)
+"Give the worker a better computer."
+VPA increases the size (CPU/RAM requests & limits) of the existing Pods.
+How it works: It analyzes historical usage. If a Pod constantly crashes due to "Out of Memory" (OOM) or throttles at 100% CPU, VPA recommends larger values.
+
+Scenario:
+You deployed a Java app requesting 200MB RAM.
+The app keeps crashing because it actually needs 500MB.
+VPA sees this pattern.
+VPA restarts the Pod with a new definition: requests: 500MB.
+The Catch (Disruption): You cannot change the CPU/RAM of a running pod. Therefore, VPA must kill the Pod and recreate it to apply the changes.
+Use Cases: Stateful apps, Databases, or legacy Monoliths that are hard to scale horizontally.
