@@ -194,5 +194,59 @@ spec:
           restartPolicy: OnFailure
 Summary Table
 
+6. Ingress
 
+Ingress in Kubernetes is an object that manages external access to the services in your cluster, typically for HTTP and HTTPS traffic.
+Think of Ingress as the Smart Receptionist for your building (cluster).
+Without Ingress: Every time you want to expose a new app (Frontend, API, Admin Panel), you have to rent a new phone number (LoadBalancer IP) from the phone company (AWS/Azure). This is expensive and hard to manage.
+With Ingress: You rent one phone number (One Public IP). The receptionist (Ingress) answers all calls and routes them to the correct office based on who the caller is asking for.
+
+7. Confitsets and secrets
+
+In Kubernetes, ConfigMaps and Secrets are the two primary ways to inject configuration data into your applications without hardcoding it into your application code or Docker image.
+They allow you to follow the "Build Once, Deploy Anywhere" philosophy. You use the exact same Docker image for Dev, Staging, and Production, but you swap out the ConfigMap/Secret to change the behavior.
+
+1. ConfigMaps (Non-Sensitive Data)
+A ConfigMap is used to store non-confidential data in key-value pairs. Think of it as a dictionary of settings or a configuration file (like nginx.conf or settings.json) that you want to pass to your app.
+Analogy: The "Settings" menu in a video game. You can change the volume or graphics quality (Configuration) without rewriting the game's code
+Use Cases:
+Database Hostnames (e.g., db-prod.company.com).
+Port numbers.
+Feature flags (e.g., ENABLE_NEW_UI: "true").
+Entire config files (injecting a custom redis.conf).
+YAML Example:
+
+YAML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # Key-Value pair
+  database_url: "mydb.example.com"
+  app_mode: "production"
+
+2. Secrets (Sensitive Data)
+A Secret is very similar to a ConfigMap, but it is specifically designed to hold sensitive information.
+Analogy: A safe deposit box. You put things here that you don't want just anyone to see.
+Use Cases:
+Passwords (DB passwords, root passwords).
+API Keys (AWS keys, Stripe tokens).
+SSH Keys or TLS/SSL Certificates.
+Key Differences from ConfigMaps:
+Obfuscation: Data in Secrets is Base64 encoded by default. (Note: This is encoding, not encryption. Anyone with access to the cluster can decode it unless you enable "Encryption at Rest" in Kubernetes).
+
+Handling: Kubernetes handles Secrets with extra care (e.g., they are never written to disk on the worker nodes, only held in RAM (tmpfs) to prevent data leaks).
+
+YAML Example:
+
+YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+data:
+  # This is "password123" encoded in Base64
+  db_password: cGFzc3dvcmQxMjM=
 
