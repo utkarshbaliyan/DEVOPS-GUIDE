@@ -201,6 +201,34 @@ Think of Ingress as the Smart Receptionist for your building (cluster).
 Without Ingress: Every time you want to expose a new app (Frontend, API, Admin Panel), you have to rent a new phone number (LoadBalancer IP) from the phone company (AWS/Azure). This is expensive and hard to manage.
 With Ingress: You rent one phone number (One Public IP). The receptionist (Ingress) answers all calls and routes them to the correct office based on who the caller is asking for.
 
+1. Definition
+
+Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Traffic routing is controlled by rules defined on the Ingress resource.
+
+2. Key Benefits
+
+Cost Efficiency: Uses 1 LoadBalancer for multiple services.
+
+Centralized Security: Can handle SSL/TLS termination at the entry point (certificates are managed here, not in the app).
+
+Clean URLs: Allows you to expose apps via standard paths (/app1, /app2) rather than obscure port numbers.
+
+3. Core Components
+
+Component	Description
+Ingress Resource	The API object (YAML) where you define routing rules.
+Ingress Controller	The specialized LoadBalancer pod (e.g., Nginx) that enforces the rules. Must be installed separately.
+Default Backend	A fallback service where traffic goes if it matches no rules (usually returns 404).
+4. Practical Workflow
+
+Install Controller: Deploy an Ingress Controller (e.g., ingress-nginx).
+
+Deploy App: Create your Deployment and internal Service (Type: ClusterIP).
+
+Define Rules: Apply the Ingress YAML to route traffic to that Service.
+
+DNS: Update your domain DNS (e.g., GoDaddy) to point to the Ingress Controller's External IP.
+
 7. Confitsets and secrets---------------------------
 
 In Kubernetes, ConfigMaps and Secrets are the two primary ways to inject configuration data into your applications without hardcoding it into your application code or Docker image.
