@@ -74,3 +74,14 @@ All-in-One Platforms: GitLab CI/CD, GitHub Actions, Azure DevOps (these are very
 CI Servers: Jenkins (the open-source, highly customizable workhorse), TeamCity, Bamboo.
 Cloud-Native Tools: Argo CD (for Kubernetes), Spinnaker (by Netflix).
 Would you like to dive deeper into any of these stages, or perhaps see an example of a CI/CD pipeline configuration file for a tool like GitHub Actions?
+
+
+
+
+-credential binding 
+-webhook 
+-workspace 
+-declarative pipelines 
+-shared libraries 
+-user management in jenkins
+-
