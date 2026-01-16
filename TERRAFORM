@@ -1,1 +1,11 @@
-
+-What is Terraform 
+-why terraform
+- .tf file
+- terraform worflow 
+- what are blocks and type of blocks 
+- how to create an ec2 instance using terraform 
+- variables 
+- output
+- loops
+- argument - depends on 
+- state management 
